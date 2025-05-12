@@ -1,0 +1,70 @@
+	/** Current EInternalObjectFlags value representing a reachable object */
+	EInternalObjectFlags FGCFlags::ReachableObjectFlag = EInternalObjectFlags::ReachabilityFlag0;
+
+	/** Current EInternalObjectFlags value representing a maybe unreachable object */
+	EInternalObjectFlags FGCFlags::MaybeUnreachableObjectFlag = EInternalObjectFlags::ReachabilityFlag1;
+
+C:\Program Files\Epic Games\UE_5.5\Engine\Source\Runtime\CoreUObject\Public\UObject\ObjectPtr.h
+		TMaybeObjectPtr& operator=(T* P)
+		{
+			Ptr = P;
+			ConditionallyMarkAsReachable();
+			return *this;
+		}
+
+	private:
+		FORCEINLINE void ConditionallyMarkAsReachable() const
+		{
+			if (const UObject* Obj = Cast<UObject>(Ptr); Obj && UE::GC::GIsIncrementalReachabilityPending)
+			{
+				UE::GC::MarkAsReachable(Obj);
+			}
+		}
+
+		T* Ptr{};
+
+C:\Program Files\Epic Games\UE_5.5\Engine\Source\Runtime\CoreUObject\Private\UObject\GarbageCollection.cpp
+	void MarkAsReachable(const UObject* Obj)
+	{
+		Obj->MarkAsReachable();
+	}
+
+
+
+void UObjectBase::MarkAsReachable() const
+{
+	// It is safe to perform mark as reachable in the open - the worst case is that we'll mark an object reachable that
+	// should/would be destroyed, and so in the next GC iteration it will be destroyed instead of in this iteration.
+	UE_AUTORTFM_OPEN
+	{
+		::MarkAsReachable<false>(this);
+	};
+}
+
+
+template <bool bIsVerse>
+FORCEINLINE static void MarkAsReachable(const UObjectBase* Obj)
+{
+	using namespace UE::GC::Private;
+
+	FUObjectItem* ObjectItem = GUObjectArray.ObjectToObjectItem(Obj);
+	if (FGCFlags::IsMaybeUnreachable_ForGC(ObjectItem))
+	{
+		MarkObjectItemAsReachable<bIsVerse>(ObjectItem);
+	}
+	else if (ObjectItem->GetOwnerIndex() > 0) // Clustered objects are never marked as MaybeUnreachable so we need to check if the cluster root is MaybeUnreachable
+	{
+		FUObjectItem* ClusterRootObjectItem = GUObjectArray.IndexToObject(ObjectItem->GetOwnerIndex());
+		if (FGCFlags::IsMaybeUnreachable_ForGC(ClusterRootObjectItem))
+		{
+			MarkObjectItemAsReachable<bIsVerse>(ClusterRootObjectItem);
+		}
+	}
+}
+
+
+
+FORCEINLINE static bool IsMaybeUnreachable_ForGC(const FUObjectItem* ObjectItem)
+{
+	return !!(ObjectItem->GetFlagsInternal() & int32(MaybeUnreachableObjectFlag));
+}
