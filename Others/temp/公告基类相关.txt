@@ -1,0 +1,1 @@
+短期：我们只能使用SMG的正确接口，不修改，原文件挪过来。例如，ZiQi_BP蓝图逻辑等保留美术原样，后续把AMSCCharacterBase平移到重构项目中继续作为角色统一基类，程序只暂时修改C++代码，例如可能在上面完成换装等共用功能，但短期2月内相继的2个版本中，不能修改派生BP_MSCCharacterBase及其子类。BP_MSCCharacterBase及其子类

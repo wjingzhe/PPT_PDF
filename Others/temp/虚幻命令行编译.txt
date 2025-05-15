@@ -1,0 +1,10 @@
+1、使用虚幻Tag 5.2.1-release 对应的源码版本引擎完成初次引擎环境配置：细节涉及Setup.py相关，可用打包机已配置好的SVN引擎,但不用提交把任何结果提交至SVN资源，后续至更新非执行文件和dll等（实际操作需要svn管理权限设置，待五一后再议细节）
+2、svn checkout svn://172.27.190.188/AwesomeLive/Asset_TA 和 svn://172.27.190.188/AwesomeLive/Solution/Solution_5_2再同级目录下 QA测试自动化打包流程中可选，可以自己新建一个第三人称相关工程完成流程推进
+3、UE4\Engine\Build\BatchFiles\GenerateProjectFiles.bat YourProject.uproject -projectfiles -engine
+4、Build.bat Editor Win64 Development -Project="D:\Project\YourProject.uproject" -WaitMutex -Verbose -log
+
+5、UE4\Engine\Build\BatchFiles\RunUAT.bat BuildCookRun -project="D:\Project\YourProject.uproject" -noP4 -platform=Win64 -clientconfig=Shipping -cook -allmaps -pak -archive -archivedirectory="D:\BuildOutput"
+6、Build.bat Server Win64 Development -Project="YourProject.uproject" （Build.bat Server Linux Development -Project="YourProject.uproject"）
+
+7、Server.exe MyGame.uproject /Game/Maps/YourProject.umap -server -port=7777 -log
+8、Client.exe MyGame.uproject 127.0.0.1:7777 -game -log
